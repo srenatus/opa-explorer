@@ -1,18 +1,25 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
 	"net/http/httputil"
 
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/compile"
+	"github.com/open-policy-agent/opa/ir"
 )
 
 const exampleCode = `package test
 import future.keywords.if
 import future.keywords.in
 
+# METADATA
+# entrypoint: true
 allow if "admin" in input.roles
 `
 
@@ -53,6 +60,7 @@ type CompileResult struct {
 	Stage  string
 	Result *ast.Module
 	Error  string
+	Plan   *ir.Plan
 }
 
 type state struct {
@@ -104,15 +112,15 @@ var stages []stage = []stage{
 	{"BuildComprehensionIndices", "compile_stage_rebuild_comprehension_indices"},
 }
 
-func CompilerStages(rego string) []CompileResult {
+func CompilerStages(code string) []CompileResult {
 	c := ast.NewCompiler().
 		WithEnablePrintStatements(true)
 
-	result := make([]CompileResult, 0, len(stages)+1)
+	result := make([]CompileResult, 0, len(stages)+2)
 	result = append(result, CompileResult{
 		Stage: "ParseModule",
 	})
-	mod, err := ast.ParseModule("a.rego", rego)
+	mod, err := ast.ParseModuleWithOpts("a.rego", code, ast.ParserOptions{ProcessAnnotation: true})
 	if err != nil {
 		result[0].Error = err.Error()
 		return result
@@ -139,6 +147,32 @@ func CompilerStages(rego string) []CompileResult {
 	})
 	if len(c.Errors) > 0 {
 		result[len(result)-1].Error = c.Errors.Error()
+	}
+
+	// get a plan
+	b := bundle.Bundle{
+		Modules: []bundle.ModuleFile{
+			{
+				Parsed: mod,
+			},
+		},
+	}
+	buf := []byte{}
+	comp := compile.New().WithTarget("plan").
+		WithEnablePrintStatements(true).
+		WithRegoAnnotationEntrypoints(true).
+		WithOutput(bytes.NewBuffer(buf)).
+		WithBundle(&b)
+	if err := comp.Build(context.Background()); err != nil {
+		result = append(result, CompileResult{
+			Stage: "Plan",
+			Error: err.Error(),
+		})
+	} else {
+		log.Printf("buf: %s", string(buf))
+		result = append(result, CompileResult{
+			Stage: "Plan",
+		})
 	}
 	return result
 }
