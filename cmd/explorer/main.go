@@ -21,26 +21,29 @@ var tpl = template.Must(template.New("main").Parse(`
 <html>
 	<head>
 		<meta charset="utf-8"/>
-		<link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css">
+		<link rel="stylesheet" href="https://the.missing.style/v1.0.3/missing.min.css">
 		<script src="https://unpkg.com/htmx.org@1.8.4" integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV" crossorigin="anonymous"></script>
 	<body>
-		<header>
-			<pre><textarea name="code"
-			  hx-get="/?tmpl=output"
-			  hx-trigger="keyup changed delay:500ms"
-			  hx-target="#output"
-			  style="height: 200px; margin-bottom: 0"
-			>{{ .Code }}</textarea></pre>
-		</header>
-		<main id="output">
-			{{ block "output" . }}
-			{{ range .Result }}
-			<details {{ if .Show }}open{{ end }}>
-				<summary>{{ .Stage }}</summary>
-				<pre><code>{{ .Output }}</code></pre>
-			</details>
-			{{ end }}
-			{{ end }}
+		<main>
+			<div class="f-row">
+				<textarea name="code"
+				  hx-get="/?tmpl=output"
+				  hx-trigger="keyup changed delay:500ms"
+				  hx-target="#output"
+				  style="height: 200px"
+				  class="flex-grow:1 monospace"
+				>{{ .Code }}</textarea>
+			</div>
+			<section id="output">
+				{{ block "output" . }}
+				{{ range .Result }}
+				<details {{ if .Show }}open{{ end }}>
+					<summary class={{ .Class }}>{{ .Stage }}</summary>
+					<pre><code>{{ .Output }}</code></pre>
+				</details>
+				{{ end }}
+				{{ end }}
+			</section>
 		</main>
 	</body>
 </html>
@@ -59,6 +62,7 @@ type state struct {
 
 type stringResult struct {
 	Show   bool
+	Class  string
 	Stage  string
 	Output string
 }
@@ -171,11 +175,22 @@ func main() {
 			st.Result[i].Stage = cs[i].Stage
 			if cs[i].Error != "" {
 				st.Result[i].Output = cs[i].Error
+				st.Result[i].Class = "bad"
 			} else {
 				st.Result[i].Output = cs[i].Result.String()
 			}
-			if i > 0 {
+			switch i {
+			case 0:
+				st.Result[i].Show = len(cs) == 1
+			default:
 				st.Result[i].Show = st.Result[i-1].Output != st.Result[i].Output
+			}
+			if st.Result[i].Class == "" {
+				if st.Result[i].Show {
+					st.Result[i].Class = "ok"
+				} else {
+					st.Result[i].Class = "plain"
+				}
 			}
 		}
 		if err := tpl.ExecuteTemplate(w, templateName, st); err != nil {
