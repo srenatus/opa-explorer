@@ -24,32 +24,22 @@ var tpl = template.Must(template.New("main").Parse(`
 		<link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css">
 		<script src="https://unpkg.com/htmx.org@1.8.4" integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV" crossorigin="anonymous"></script>
 	<body>
-		<main>
+		<header>
 			<pre><textarea name="code"
 			  hx-get="/?tmpl=output"
 			  hx-trigger="keyup changed delay:500ms"
 			  hx-target="#output"
 			  style="height: 200px; margin-bottom: 0"
 			>{{ .Code }}</textarea></pre>
+		</header>
+		<main id="output">
 			{{ block "output" . }}
-			<div id="output">
-			{{ block "stages" . }}
-			<select name="stage"
-			  id="stages"
-			  size=10
-			  hx-get="/result?tmpl=result&code={{ .Code | urlquery }}"
-			  hx-target="#result"
-			  hx-swap="outerHTML"
-			>
-				{{ range .Result }}
-				<option value="{{ .Stage }}">{{ .Stage }}</option>
-				{{ end }}
-			</select>
+			{{ range .Result }}
+			<details {{ if .Show }}open{{ end }}>
+				<summary>{{ .Stage }}</summary>
+				<pre><code>{{ .Output }}</code></pre>
+			</details>
 			{{ end }}
-			{{ block "result" . }}
-			<pre id="result"><code>{{ .Selected }}</code></pre>
-			{{ end }}
-			</div>
 			{{ end }}
 		</main>
 	</body>
@@ -63,9 +53,14 @@ type CompileResult struct {
 }
 
 type state struct {
-	Code     string
-	Selected string
-	Result   []CompileResult
+	Code   string
+	Result []stringResult
+}
+
+type stringResult struct {
+	Show   bool
+	Stage  string
+	Output string
 }
 
 type stage struct{ name, metricName string }
@@ -169,20 +164,18 @@ func main() {
 		}
 		cs := CompilerStages(code)
 		st := state{
-			Code:   code,
-			Result: cs,
+			Code: code,
 		}
-		sel := r.URL.Query().Get("stage")
-		if sel == "" {
-			sel = cs[0].Stage
-		}
+		st.Result = make([]stringResult, len(cs))
 		for i := range cs {
-			switch {
-			case cs[i].Stage != sel: // next
-			case cs[i].Error != "":
-				st.Selected = cs[i].Error
-			case cs[i].Result != nil:
-				st.Selected = cs[i].Result.String()
+			st.Result[i].Stage = cs[i].Stage
+			if cs[i].Error != "" {
+				st.Result[i].Output = cs[i].Error
+			} else {
+				st.Result[i].Output = cs[i].Result.String()
+			}
+			if i > 0 {
+				st.Result[i].Show = st.Result[i-1].Output != st.Result[i].Output
 			}
 		}
 		if err := tpl.ExecuteTemplate(w, templateName, st); err != nil {
