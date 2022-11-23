@@ -12,8 +12,15 @@ import (
 const exampleCode = `package test
 import future.keywords.if
 import future.keywords.in
+import input.roles
 
-allow if "admin" in input.roles
+# METADATA
+# entrypoint: true
+allow := "admin" in roles if {
+	print(roles)
+	some x in roles
+	x == "janitor"
+}
 `
 
 var tpl = template.Must(template.New("main").Parse(`
@@ -30,7 +37,7 @@ var tpl = template.Must(template.New("main").Parse(`
 				  hx-get="/?tmpl=output"
 				  hx-trigger="keyup changed delay:500ms"
 				  hx-target="#output"
-				  style="height: 200px"
+				  style="height: 300px"
 				  class="flex-grow:1 monospace"
 				>{{ .Code }}</textarea>
 			</div>
@@ -112,7 +119,7 @@ func CompilerStages(rego string) []CompileResult {
 	result = append(result, CompileResult{
 		Stage: "ParseModule",
 	})
-	mod, err := ast.ParseModule("a.rego", rego)
+	mod, err := ast.ParseModuleWithOpts("a.rego", rego, ast.ParserOptions{ProcessAnnotation: true})
 	if err != nil {
 		result[0].Error = err.Error()
 		return result
@@ -179,12 +186,7 @@ func main() {
 			} else {
 				st.Result[i].Output = cs[i].Result.String()
 			}
-			switch i {
-			case 0:
-				st.Result[i].Show = len(cs) == 1
-			default:
-				st.Result[i].Show = st.Result[i-1].Output != st.Result[i].Output
-			}
+			st.Result[i].Show = i == 0 || st.Result[i-1].Output != st.Result[i].Output
 			if st.Result[i].Class == "" {
 				if st.Result[i].Show {
 					st.Result[i].Class = "ok"
