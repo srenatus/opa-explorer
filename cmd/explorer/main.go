@@ -36,15 +36,19 @@ var tpl = template.Must(template.New("main").Parse(`
 		<script src="https://unpkg.com/htmx.org@1.8.4" integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV" crossorigin="anonymous"></script>
 	<body>
 		<main>
-			<div class="f-row">
+			<form
+			  hx-post="/?tmpl=output"
+			  hx-target="#output"
+			  class="f-row"
+			>
 				<textarea name="code"
-				  hx-get="/?tmpl=output"
-				  hx-trigger="keyup changed delay:500ms"
-				  hx-target="#output"
 				  style="height: 300px"
+				  hx-trigger="keyup changed delay:200ms"
 				  class="flex-grow:1 monospace"
 				>{{ .Code }}</textarea>
-			</div>
+				<label>strict <input type="checkbox" name="strict"></label>
+				<button type="submit">compile</button>
+			</form>
 			<section id="output">
 				{{ block "output" . }}
 				{{ range .Result }}
