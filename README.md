@@ -1,6 +1,8 @@
 # opa-explorer
 
-Graphical user interface to showcase the different stages of Rego compilation, using the Topdown compiler in OPA.
+![OPA v0.46.1](https://openpolicyagent.org/badge/v0.46.1)
+
+Graphical user interface to showcase the different stages of Rego compilation in OPA.
 
 ![screenshot](/doc/screenshot.png?raw=true "OPA explorer")
 
