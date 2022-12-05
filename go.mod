@@ -2,7 +2,7 @@ module github.com/srenatus/opa-explorer
 
 go 1.19
 
-require github.com/open-policy-agent/opa v0.46.1
+require github.com/open-policy-agent/opa v0.47.0
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
