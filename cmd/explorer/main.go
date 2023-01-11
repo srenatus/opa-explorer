@@ -5,12 +5,18 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
 	"net/http/httputil"
 
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/compile"
+	"github.com/open-policy-agent/opa/ir"
 )
 
 const exampleCode = `package test
@@ -126,7 +132,7 @@ var stages []stage = []stage{
 	{"BuildComprehensionIndices", "compile_stage_rebuild_comprehension_indices"},
 }
 
-func CompilerStages(rego string, strict, anno, print bool) []CompileResult {
+func compilerStages(rego string, strict, anno, print bool) []CompileResult {
 	c := ast.NewCompiler().
 		WithStrict(strict).
 		WithEnablePrintStatements(print)
@@ -173,8 +179,47 @@ func getOne(mods map[string]*ast.Module) *ast.Module {
 	panic("unreachable")
 }
 
+func plan(ctx context.Context, rego string, print bool) (string, error) {
+	mod, err := ast.ParseModuleWithOpts("a.rego", rego, ast.ParserOptions{ProcessAnnotation: true})
+	if err != nil {
+		return "", err
+	}
+	b := &bundle.Bundle{
+		Modules: []bundle.ModuleFile{
+			{
+				URL:    "/url",
+				Path:   "/a.rego",
+				Raw:    []byte(rego),
+				Parsed: mod,
+			},
+		},
+	}
+
+	compiler := compile.New().
+		WithTarget(compile.TargetPlan).
+		WithBundle(b).
+		WithRegoAnnotationEntrypoints(true).
+		WithEnablePrintStatements(print)
+	if err := compiler.Build(ctx); err != nil {
+		return "", err
+	}
+
+	bundle := compiler.Bundle()
+	var policy ir.Policy
+
+	if err := json.Unmarshal(bundle.PlanModules[0].Raw, &policy); err != nil {
+		return "", err
+	}
+	buf := bytes.Buffer{}
+	if err := ir.Pretty(&buf, &policy); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		bs, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			panic(err)
@@ -195,11 +240,12 @@ func main() {
 		strict := r.Form.Get("strict") == "on"
 		anno := r.Form.Get("annotations") == "on"
 		print := r.Form.Get("print") == "on"
-		cs := CompilerStages(code, strict, print, anno)
+
+		cs := compilerStages(code, strict, print, anno)
 		st := state{
 			Code: code,
 		}
-		st.Result = make([]stringResult, len(cs))
+		st.Result = make([]stringResult, len(cs)+1)
 		for i := range cs {
 			st.Result[i].Stage = cs[i].Stage
 			if cs[i].Error != "" {
@@ -217,6 +263,18 @@ func main() {
 				}
 			}
 		}
+		n := len(cs)
+		st.Result[n].Stage = "Plan"
+		st.Result[n].Show = true
+		p, err := plan(ctx, code, print)
+		if err != nil {
+			st.Result[n].Class = "bad"
+			st.Result[n].Output = err.Error()
+		} else {
+			st.Result[n].Class = "ok"
+			st.Result[n].Output = p
+		}
+
 		if err := tpl.ExecuteTemplate(w, templateName, st); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
