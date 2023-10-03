@@ -38,7 +38,7 @@ var tpl = template.Must(template.New("main").Parse(`
 <html>
 	<head>
 		<meta charset="utf-8"/>
-		<link rel="stylesheet" href="https://the.missing.style/v1.0.3/missing.min.css">
+		<link rel="stylesheet" href="assets/missing.min.css">
 		<script src="https://unpkg.com/htmx.org@1.8.4" integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV" crossorigin="anonymous"></script>
 	<body>
 		<header>
@@ -279,6 +279,9 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
+
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
+
 	log.Println("starting: http:/127.0.0.1:9000")
 	panic(http.ListenAndServe("127.0.0.1:9000", nil))
 }
