@@ -4,7 +4,7 @@
 
 Graphical user interface to showcase the different stages of Rego compilation in OPA.
 
-![screenshot](/doc/screenshot.png?raw=true "OPA explorer")
+![screenshot](/assets/screenshot.png?raw=true "OPA explorer")
 
 ## Usage
 
