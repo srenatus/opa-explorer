@@ -45,7 +45,7 @@ var tpl = template.Must(template.New("main").Parse(`
 			<h1>OPA Explorer<v-h>:</v-h><sub-title>Inspect compiler stages</sub-title></h1>
 			<nav>
 				<p class="tool-bar">
-					<img src="https://openpolicyagent.org/badge/v0.48.0"/>
+					<img src="https://openpolicyagent.org/badge/v0.57.0"/>
 					<a href="https://github.com/srenatus/opa-explorer">GitHub</a>
 				</p>
 			</nav>

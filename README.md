@@ -1,6 +1,6 @@
 # opa-explorer
 
-![OPA v0.48.0](https://openpolicyagent.org/badge/v0.48.0)
+![OPA v0.57.0](https://openpolicyagent.org/badge/v0.57.0)
 
 Graphical user interface to showcase the different stages of Rego compilation in OPA.
 
