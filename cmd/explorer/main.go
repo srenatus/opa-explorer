@@ -65,8 +65,8 @@ var tpl = template.Must(template.New("main").Parse(`
 			<section id="output">
 				{{ block "output" . }}
 				{{ range .Result }}
-				<details {{ if .Show }}open{{ end }}>
-					<summary class={{ .Class }}>{{ .Stage }}</summary>
+				<details class={{ .Class }} {{ if .Show }}open{{ end }}>
+					<summary>{{ .Stage }}</summary>
 					<pre><code>{{ .Output }}</code></pre>
 				</details>
 				{{ end }}
