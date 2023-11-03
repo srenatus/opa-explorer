@@ -168,7 +168,12 @@ func compilerStages(rego string, strict, anno, print bool) []CompileResult {
 		"a.rego": mod,
 	})
 	if len(c.Errors) > 0 {
-		result[len(result)-1].Error = c.Errors.Error()
+		// stage after the last than ran successfully
+		stage := stages[len(result)-1]
+		result = append(result, CompileResult{
+			Stage: stage.name + ": Failure",
+			Error: c.Errors.Error(),
+		})
 	}
 	return result
 }
