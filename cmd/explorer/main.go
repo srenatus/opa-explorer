@@ -45,7 +45,7 @@ var tpl = template.Must(template.New("main").Parse(`
 			<h1>OPA Explorer<v-h>:</v-h><sub-title>Inspect compiler stages</sub-title></h1>
 			<nav>
 				<p class="tool-bar">
-					<img src="https://openpolicyagent.org/badge/v0.57.0"/>
+					<img src="https://openpolicyagent.org/badge/v0.58.0"/>
 					<a href="https://github.com/srenatus/opa-explorer">GitHub</a>
 				</p>
 			</nav>
@@ -97,7 +97,7 @@ type stringResult struct {
 
 type stage struct{ name, metricName string }
 
-// NOTE(sr): copied from 0.46.1
+// NOTE(sr): copied from 0.58.0
 var stages []stage = []stage{
 	{"ResolveRefs", "compile_stage_resolve_refs"},
 	{"InitLocalVarGen", "compile_stage_init_local_var_gen"},
@@ -106,7 +106,7 @@ var stages []stage = []stage{
 	{"CheckDuplicateImports", "compile_stage_check_duplicate_imports"},
 	{"RemoveImports", "compile_stage_remove_imports"},
 	{"SetModuleTree", "compile_stage_set_module_tree"},
-	{"SetRuleTree", "compile_stage_set_rule_tree"}, // depends on RewriteRuleHeadRefs
+	{"SetRuleTree", "compile_stage_set_rule_tree"},
 	{"RewriteLocalVars", "compile_stage_rewrite_local_vars"},
 	{"CheckVoidCalls", "compile_stage_check_void_calls"},
 	{"RewritePrintCalls", "compile_stage_rewrite_print_calls"},
@@ -125,11 +125,12 @@ var stages []stage = []stage{
 	{"RewriteEquals", "compile_stage_rewrite_equals"},
 	{"RewriteDynamicTerms", "compile_stage_rewrite_dynamic_terms"},
 	{"CheckRecursion", "compile_stage_check_recursion"},
-	{"CheckTypes", "compile_stage_check_types"}, // must be run after CheckRecursion
+	{"CheckTypes", "compile_stage_check_types"},
 	{"CheckUnsafeBuiltins", "compile_state_check_unsafe_builtins"},
 	{"CheckDeprecatedBuiltins", "compile_state_check_deprecated_builtins"},
 	{"BuildRuleIndices", "compile_stage_rebuild_indices"},
 	{"BuildComprehensionIndices", "compile_stage_rebuild_comprehension_indices"},
+	{"BuildRequiredCapabilities", "compile_stage_build_required_capabilities"},
 }
 
 func compilerStages(rego string, strict, anno, print bool) []CompileResult {
