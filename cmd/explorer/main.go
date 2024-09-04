@@ -45,7 +45,7 @@ var tpl = template.Must(template.New("main").Parse(`
 			<h1>OPA Explorer<v-h>:</v-h><sub-title>Inspect compiler stages</sub-title></h1>
 			<nav>
 				<p class="tool-bar">
-					<img src="https://openpolicyagent.org/badge/v0.58.0"/>
+					<img src="https://openpolicyagent.org/badge/v0.68.0"/>
 					<a href="https://github.com/srenatus/opa-explorer">GitHub</a>
 				</p>
 			</nav>
@@ -97,7 +97,7 @@ type stringResult struct {
 
 type stage struct{ name, metricName string }
 
-// NOTE(sr): copied from 0.58.0
+// NOTE(sr): copied from 0.68.0
 var stages []stage = []stage{
 	{"ResolveRefs", "compile_stage_resolve_refs"},
 	{"InitLocalVarGen", "compile_stage_init_local_var_gen"},
@@ -124,6 +124,7 @@ var stages []stage = []stage{
 	{"CheckSafetyRuleBodies", "compile_stage_check_safety_rule_bodies"},
 	{"RewriteEquals", "compile_stage_rewrite_equals"},
 	{"RewriteDynamicTerms", "compile_stage_rewrite_dynamic_terms"},
+	{"RewriteTestRulesForTracing", "compile_stage_rewrite_test_rules_for_tracing"}, // must run after RewriteDynamicTerms
 	{"CheckRecursion", "compile_stage_check_recursion"},
 	{"CheckTypes", "compile_stage_check_types"},
 	{"CheckUnsafeBuiltins", "compile_state_check_unsafe_builtins"},
