@@ -1,5 +1,8 @@
 # opa-explorer
 
+> [!NOTE]
+> opa-explorer has become part of [Regal](https://github.com/open-policy-agent/regal)!
+
 ![OPA v0.68.0](https://openpolicyagent.org/badge/v0.68.0)
 
 Graphical user interface to showcase the different stages of Rego compilation in OPA.
